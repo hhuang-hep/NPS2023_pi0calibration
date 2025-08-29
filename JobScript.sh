@@ -21,5 +21,5 @@ runNb=$1
 segNb=$2
 
 #Copy files and run the script
-cp $homeDir/calibTree_debug_2.C $homeDir/temp/calibTree_debug_2_${runNb}_${segNb}.C
+cp $homeDir/calibTree.C $homeDir/temp/calibTree_${runNb}_${segNb}.C
 srun $homeDir/calibTree.sh $runNb $segNb

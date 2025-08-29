@@ -52,7 +52,7 @@ void Draw_pi0Calib(TString Kine, int TargetFlag)
 
     // Get pi0 correction factors
     TString filename = Form("%s_%s", Kine.Data(), Tar.Data());
-    ifstream fcorr_old(Form("Result/%s_pass2_v2/corr_pi0.txt", filename.Data())); // In simulation numbering scheme
+    ifstream fcorr_old(Form("Result/%s_pass2_v3/corr_pi0.txt", filename.Data())); // In simulation numbering scheme
 
     Double_t corr_pi0[1080];
     for(int iblk = 0; iblk < 1080; iblk++) fcorr_old>>corr_pi0[bnConv_OldToNew(iblk)]; // convert to NPS numbering scheme
@@ -68,9 +68,9 @@ void Draw_pi0Calib(TString Kine, int TargetFlag)
     // system(Form("rm -f coef_final/for_hcana/coef_pi0Calib_%s.txt", filename.Data()));
     // ofstream fout_coef_hcana(Form("coef_final/for_hcana/coef_pi0Calib_%s.txt", filename.Data()));
     // fout_coef_hcana<<"nps_cal_arr_gain_cor = ";
-
-    system(Form("rm -f Result/%s_pass2_v2/coef_pi0Calib_temp.txt", filename.Data()));
-    ofstream fout_coef(Form("Result/%s_pass2_v2/coef_pi0Calib_temp.txt", filename.Data()));
+    
+    system(Form("rm -f Result/%s_pass2_v3/coef_pi0Calib_temp.txt", filename.Data()));
+    ofstream fout_coef(Form("Result/%s_pass2_v3/coef_pi0Calib_temp.txt", filename.Data()));
     for(int iblk = 0; iblk < 1080; iblk++){
         Int_t icol = iblk%30;
         Int_t irow = (iblk-icol)/30;
@@ -88,13 +88,6 @@ void Draw_pi0Calib(TString Kine, int TargetFlag)
         // else fout_coef_hcana<<coef_final<<", ";
     }
 
-    // Coefficients for each run----->Need reconstruction again for further correction
-    // for(int irun = 0; irun < nRun; irun++){
-    //     system((Form("cp coef_pi0Calib_temp.txt coef_final/coef_pi0Calib_%d.txt", runList[irun])));
-    // }
-
-    // system("rm -f coef_pi0Calib_temp.txt");
-
     TFile *infile[nIter+1];
     TH1 *h_pi0M;
     TF1 *f_fit;
@@ -104,7 +97,7 @@ void Draw_pi0Calib(TString Kine, int TargetFlag)
     TH1F *h_width_iter = new TH1F("h_width_iter", "#sigma_{#pi^{0}} vs. iteration;Iteration;#sigma_{#pi^{0}} [MeV/c^{2}]",nIter+1, -0.5, nIter+0.5);
     
     for(int iIter = 0; iIter < nIter+1; iIter++){
-        infile[iIter] = TFile::Open(Form("Result/%s_pass2_v2/f_Mgg_%d.root", filename.Data(), iIter));
+        infile[iIter] = TFile::Open(Form("Result/%s_pass2_v3/f_Mgg_%d.root", filename.Data(), iIter));
         h_pi0M = (TH1F*)infile[iIter]->Get(Form("h_pi0M_%d", iIter));
         h_pi0M->Rebin(2);
         Double_t meanfit = h_pi0M->GetBinCenter(h_pi0M->GetMaximumBin());
@@ -163,7 +156,7 @@ void Draw_pi0Calib(TString Kine, int TargetFlag)
         format_Legend(leg_pi0M);
         leg_pi0M->Draw();
 
-        c_pi0M->SaveAs(Form("Result/%s_pass2_v2/pi0M_iter_%d.png", filename.Data(), iIter));
+        c_pi0M->SaveAs(Form("Result/%s_pass2_v3/pi0M_iter_%d.png", filename.Data(), iIter));
     }
 
     TLine *l_mass = new TLine(-0.5, 1000*0.1349766, nIter+0.5, 1000*0.1349766);
@@ -187,7 +180,7 @@ void Draw_pi0Calib(TString Kine, int TargetFlag)
     format_Legend(leg_mass);
     leg_mass->Draw();
 
-    c_mass->SaveAs(Form("Result/%s_pass2_v2/Mass_iter.png", filename.Data()));
+    c_mass->SaveAs(Form("Result/%s_pass2_v3/Mass_iter.png", filename.Data()));
 
     TCanvas *c_width = new TCanvas("c_width", "", 1000, 1000);
     h_width_iter->GetYaxis()->SetRangeUser(0.8*h_width_iter->GetMinimum(), 1.2*h_width_iter->GetMaximum());
@@ -198,22 +191,22 @@ void Draw_pi0Calib(TString Kine, int TargetFlag)
     format_Legend(leg_width);
     leg_width->Draw();
 
-    c_width->SaveAs(Form("Result/%s_pass2_v2/Width_iter.png", filename.Data()));
+    c_width->SaveAs(Form("Result/%s_pass2_v3/Width_iter.png", filename.Data()));
 
     TCanvas *c_coEff = new TCanvas("c_coEff", "", 1000, 1000);
     format_Line(h_coEff, 1, kBlue, 3);
     h_coEff->Draw("hist");
-    c_coEff->SaveAs(Form("Result/%s_pass2_v2/coefficient.png", filename.Data()));
+    c_coEff->SaveAs(Form("Result/%s_pass2_v3/coefficient.png", filename.Data()));
     
     h_coEff->GetYaxis()->SetRangeUser(0, 2);
-    c_coEff->SaveAs(Form("Result/%s_pass2_v2/coefficient_zoomin.png", filename.Data()));
+    c_coEff->SaveAs(Form("Result/%s_pass2_v3/coefficient_zoomin.png", filename.Data()));
 
     TCanvas *c_coEff2D = new TCanvas("c_coEff2D", "", 2000, 1000);
     hh_coEff->Draw("colz");
     hh_iblk->Draw("text same");
-    c_coEff2D->SaveAs(Form("Result/%s_pass2_v2/coefficient2D.png", filename.Data()));
+    c_coEff2D->SaveAs(Form("Result/%s_pass2_v3/coefficient2D.png", filename.Data()));
 
     hh_coEff->GetZaxis()->SetRangeUser(0, 2);
     hh_iblk->Draw("text same");
-    c_coEff2D->SaveAs(Form("Result/%s_pass2_v2/coefficient2D_zoomin.png", filename.Data()));
+    c_coEff2D->SaveAs(Form("Result/%s_pass2_v3/coefficient2D_zoomin.png", filename.Data()));
 }

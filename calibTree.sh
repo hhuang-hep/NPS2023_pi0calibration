@@ -6,11 +6,11 @@ homeDir=/group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/pi0Calib_wf
 runNb=$1
 segNb=$2
 
-fileNAME=$homeDir/temp/calibTree_debug_2_${runNb}_${segNb}
+fileNAME=$homeDir/temp/calibTree_${runNb}_${segNb}
 
 root -b <<EOF
     .L $fileNAME.C+
-        calibTree_debug_2($runNb,$segNb);
+        calibTree($runNb,$segNb);
     .q
 EOF
 

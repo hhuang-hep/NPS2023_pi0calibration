@@ -193,34 +193,40 @@ void calibTree(int run_number, int iseg)
     TH1F *h_offset = (TH1F*)wfOffset_hao->Get(Form("h_fitTiming_noTimeCorr_run%d", run_number));
     Double_t timingOffset[1080];
     for(int iblk = 0; iblk < 1080; iblk++){
-        Int_t icol = iblk%30;
-        Int_t irow = (iblk-icol)/30;
-        if((run_number == 3013 && (icol == 4 || iblk == 26))
-        || (run_number == 3014 && (icol == 4)) 
-        || (run_number == 3015 && (icol == 4 || iblk == 6 || iblk == 12 || iblk == 15 || iblk == 23 || iblk == 26 || iblk == 1056 || iblk == 1057 || iblk == 1089 || iblk == 1068 || iblk == 1070))
-        || (run_number == 3016 && (icol == 4 || irow == 0 || irow == 35 || iblk == 65 || iblk == 126 || iblk == 245 || iblk == 1025 || iblk == 1026 || iblk == 1028))
-        || (run_number == 3020 && (icol == 4 || irow == 35 || (0 <= iblk && iblk <= 26) || iblk == 52 || iblk == 1032 || (1050 <= iblk && iblk <= 1074)))) timingOffset[iblk] = timingOffset_Mark[iblk];
-        else timingOffset[iblk] = -1*h_offset->GetBinContent(iblk+1);
+        if(!use_wf) timingOffset[iblk] = 0.;
+        if(use_wf){
+            Int_t icol = iblk%30;
+            Int_t irow = (iblk-icol)/30;
+            if((run_number == 3013 && (icol == 4 || iblk == 26))
+            || (run_number == 3014 && (icol == 4)) 
+            || (run_number == 3015 && (icol == 4 || iblk == 6 || iblk == 12 || iblk == 15 || iblk == 23 || iblk == 26 || iblk == 1056 || iblk == 1057 || iblk == 1089 || iblk == 1068 || iblk == 1070))
+            || (run_number == 3016 && (icol == 4 || irow == 0 || irow == 35 || iblk == 65 || iblk == 126 || iblk == 245 || iblk == 1025 || iblk == 1026 || iblk == 1028))
+            || (run_number == 3020 && (icol == 4 || irow == 35 || (0 <= iblk && iblk <= 26) || iblk == 52 || iblk == 1032 || (1050 <= iblk && iblk <= 1074)))) timingOffset[iblk] = timingOffset_Mark[iblk];
+            else timingOffset[iblk] = -1*h_offset->GetBinContent(iblk+1);
+        }
     }
 
     // Connect to the database and get kinematics variables________________________________________________
     gSystem->Load("/group/nps/hhuang/software/NPS_SOFT/libDVCS.so");
     TDVCSDB *db = new TDVCSDB("dvcs", "clrlpc", 3306, "hhuang", "");
 
-    Double_t Beam_energy = *db->GetEntry_d("BEAM_param_Energy", run_number);
-    Double_t HMS_mom = *db->GetEntry_d("SIMU_param_HMSmomentum", run_number);
-    Double_t HMS_angle = *db->GetEntry_d("SIMU_param_HMSangle", run_number);
-    Double_t Target_amu = *db->GetEntry_d("TARGET_param_Amu", run_number);
+    Double_t Beam_energy = *db->GetEntry_d("BEAM_param_Energy", run_number); // Beam energy in GeV
+    Double_t HMS_mom = *db->GetEntry_d("SIMU_param_HMSmomentum", run_number); // HMS central momentum in GeV/c
+    Double_t HMS_angle = *db->GetEntry_d("SIMU_param_HMSangle", run_number); // HMS angle in rad
+    Double_t Target_amu = *db->GetEntry_d("TARGET_param_Amu", run_number); // Target amu
 
     // The angle and distance of calorimeter
-    Double_t NPS_dist = *db->GetEntry_d("CALO_geom_Dist", run_number);
-    Double_t NPS_angle = *db->GetEntry_d("CALO_geom_Yaw", run_number); // Rad already in DB
+    Double_t NPS_dist = *db->GetEntry_d("CALO_geom_Dist", run_number); // NPS distence in cm
+    Double_t NPS_angle = *db->GetEntry_d("CALO_geom_Yaw", run_number); // NPS angle in rad
     Int_t *caloMaskBlock = new Int_t[1080]; // Get the mask block information in NPS numbering Scheme
     caloMaskBlock = db->GetEntry_i("CALO_flag_MaskBlock", run_number);
 
     // Elastic coefficients
-    Double_t *coefElas = new Double_t[1080]; // Get the elastic coefficients in NPS numbering Scheme
+    Double_t *coefElas = new Double_t[1080]; // Get the elastic coefficients (GeV/mV) in NPS numbering Scheme
     coefElas = db->GetEntry_d("CALO_calib_ElasCoef", run_number);
+    for(int iblk = 0; iblk < 1080; iblk++){
+        if(coefElas[iblk] <= 0 && !caloMaskBlock[iblk]) coefElas[iblk] = 0.014; // if the coefficient <= 0, set it to 0.014 GeV/mV
+    }
 
     cout<<"Start clustering for Run "<<run_number<<", segment "<<iseg<<endl;
     cout<<"========== Run information =========="<<endl;
@@ -243,7 +249,8 @@ void calibTree(int run_number, int iseg)
     cout<<"======================================"<<endl;
     cout<<endl;
     cout<<"========== NPS timing offsets =========="<<endl;
-    for(int iblk = 0; iblk < 1080; iblk++) cout<<timingOffset[iblk]<<" ";
+    if(!use_wf) cout<<"Using hcana data, timing offsets are applied in the nps replay";
+    if(use_wf) for(int iblk = 0; iblk < 1080; iblk++) cout<<timingOffset[iblk]<<" ";
     cout<<endl;
     cout<<"======================================"<<endl;
     cout<<endl;
@@ -254,8 +261,7 @@ void calibTree(int run_number, int iseg)
 
     TDVCSEvent *ev = new TDVCSEvent();
     TCaloEvent *caloev = new TCaloEvent(run_number);
-    ev->GetGeometry()->SetCaloTheta(-1*NPS_angle); // rad
-    Double_t alpha = NPS_angle, d = NPS_dist; // rad, cm
+    ev->GetGeometry()->SetCaloTheta(-1*NPS_angle); // rad Note: the angle have to be negative here
     ev->GetGeometry()->SetCaloDist(NPS_dist); // cm
 
     // Create histograms__________________________________________________________
@@ -283,7 +289,7 @@ void calibTree(int run_number, int iseg)
 
     // Ontput files for Tree___________________________________________________________
     TFile *outfile;
-    if(!use_wf) outfile = new TFile(Form("/group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/pi0Calib_wf/calibTree/x36_2_1/prodTree_pass2_v2_%d_%d.root", run_number, iseg), "recreate"); // When using the T tree
+    if(!use_wf) outfile = new TFile(Form("/group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/pi0Calib_wf/calibTree/x36_2_1/prodTree_pass2_v3_%d_%d.root", run_number, iseg), "recreate"); // When using the T tree
     if(use_wf) outfile = new TFile(Form("/group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/pi0Calib_wf/calibTree/x36_2_1/prodTree_wf_v7_%d_%d.root", run_number, iseg), "recreate");// When using the waveform tree
 
     if (!outfile){ // Check if the output file was created successfully
@@ -312,7 +318,7 @@ void calibTree(int run_number, int iseg)
 
     Int_t nExcEvt = 0;
     for(Int_t ievt = 0; ievt < nevt; ievt++){
-        if(run_number == 4365 && iseg == 3 && ievt == 233096) continue; // There is some problem with this event, skip it
+        if(run_number == 4365 && iseg == 3 && ievt == 233096) continue; // There is some problem with this event in x60_4b, skip it
         t_T->GetEntry(ievt);
         t_wf->GetEntry(indexArray[ievt]); // indexArray[i] is the original-entry number for the i-th smallest evt
         if(ievt%100000==0) cout << "Looking at entry = " << ievt << "  (" << 100.*ievt/nevt_T << "%)" << endl;
@@ -380,7 +386,7 @@ void calibTree(int run_number, int iseg)
             } // loop over 1080 blocks
         }
 
-        caloev->TriggerSim(0.05);     // Energy threshold 0.05 GeV of every 2x2 for clustering
+        caloev->TriggerSim(0.1);     // Energy threshold 0.05 GeV of every 2x2 for clustering
         caloev->DoClustering(-3, 3); // Time window (-3,3) [ns]
         ev->SetCaloEvent(caloev);
         ev->SetVertex(H_react_x, H_react_y, H_react_z);

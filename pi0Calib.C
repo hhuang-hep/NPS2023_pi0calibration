@@ -1,6 +1,6 @@
-// This program is execute with pi0Calib.sh for pi0 calibration
-// e.g. execute with ./pi0Calib.sh 36_5_4m LH2_all 1
-// Kine is the folder in calibList, Tar is the list file name iIter is the iteration to start.
+// Execute with ./pi0Calib.sh <kinematics name> <target flag> <iteration to start>
+// see /group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/MakeProdList/<kinematics name>_<target flag>_ProdList.txt
+// Target flag: 0 for LH2, 1 for LD2, -1 for both
 
 #include "/group/nps/hhuang/analysis/MyHeader/Analysis.h"
 #include "/group/nps/hhuang/analysis/MyHeader/MyDB.h"
@@ -51,7 +51,7 @@ void PrintMemoryUsage(const std::string& tag = "") {
     
     // evaluate the crystal ball function
     if (sigma < 0.)     return 0.;
-    double z = (x[0] - mean)/sigma; 
+    double z = (x[0] - mean)/sigma;
     if (alpha < 0) z = -z; 
     double abs_alpha = std::abs(alpha);
     // double C = n/abs_alpha * 1./(n-1.) * std::exp(-alpha*alpha/2.);
@@ -95,7 +95,7 @@ void pi0Calib(TString Kine, int TargetFlag, int iIter)
 
     // Make folder for the new calibration results
     TString filename = Form("%s_%s", Kine.Data(), Tar.Data());
-    if(iIter == 1) system(Form("mkdir Result/%s_pass2_v2", filename.Data()));
+    if(iIter == 1) system(Form("mkdir Result/%s_pass2_v3", filename.Data()));
 
     // Get the list of runs for calibration
     ifstream fRunList(Form("/group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/MakeProdList/%s_%d_ProdList.txt", Kine.Data(), TargetFlag));
@@ -130,7 +130,7 @@ void pi0Calib(TString Kine, int TargetFlag, int iIter)
     TChain *chain = new TChain("t_prod");
     for(int irun = 0; irun < nRun; irun++){
         for(int iseg = 0; iseg < nSegList[irun]; iseg++){
-            chain->Add(Form("/group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/pi0Calib_wf/calibTree/%s/prodTree_pass2_v2_%d_%d.root", Kine.Data(), runList[irun], iseg));
+            chain->Add(Form("/group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/pi0Calib_wf/calibTree/%s/prodTree_pass2_v3_%d_%d.root", Kine.Data(), runList[irun], iseg));
             // cout<<"Run:"<<runList[irun]<<"; Segment: "<<iseg<<endl;
         }
     }
@@ -167,8 +167,8 @@ void pi0Calib(TString Kine, int TargetFlag, int iIter)
     // for (Int_t i = 0; i < 1080; i++) cout<<coef[i]<<endl;
 
     // Print out some basic information for recording
-    system(Form("rm -f Result/%s_pass2_v2/calib_Info.txt", filename.Data())); // avoid appending old file
-    ofstream info_Stream(Form("Result/%s_pass2_v2/calib_Info.txt", filename.Data()));
+    system(Form("rm -f Result/%s_pass2_v3/calib_Info.txt", filename.Data())); // avoid appending old file
+    ofstream info_Stream(Form("Result/%s_pass2_v3/calib_Info.txt", filename.Data()));
 
     info_Stream<<"This is the calibration for KinC_x"<<Kine.Data()<<endl;
     info_Stream<<"Beam energy: "<<Beam_energy<<endl;
@@ -236,8 +236,8 @@ void pi0Calib(TString Kine, int TargetFlag, int iIter)
     Float_t pi0Mass_max = 0.15;
 
     // Ouput files for recording
-    system(Form("rm -f Result/%s_pass2_v2/log_Iteration_%d.txt", filename.Data(), iIter)); // avoid appending old file
-    ofstream log_Stream(Form("Result/%s_pass2_v2/log_Iteration_%d.txt", filename.Data(), iIter));
+    system(Form("rm -f Result/%s_pass2_v3/log_Iteration_%d.txt", filename.Data(), iIter)); // avoid appending old file
+    ofstream log_Stream(Form("Result/%s_pass2_v3/log_Iteration_%d.txt", filename.Data(), iIter));
     
     log_Stream<<"++++++++++ This is iteration "<<iIter<<" of calibration ++++++++++"<<endl;
 
@@ -250,7 +250,7 @@ void pi0Calib(TString Kine, int TargetFlag, int iIter)
         for(Int_t i = 0; i < nblk; i++) corr_pi0[i] = 1; // initialize the correction factor
 
         // Output histogram of invariant mass distribution
-        TFile *output_iter0 = new TFile(Form("Result/%s_pass2_v2/f_Mgg_%d.root", filename.Data(), iIter-1), "recreate");
+        TFile *output_iter0 = new TFile(Form("Result/%s_pass2_v3/f_Mgg_%d.root", filename.Data(), iIter-1), "recreate");
         TH1F *h_pi0M_iter0 = new TH1F(Form("h_pi0M_%d", iIter-1), "M_{#gamma#gamma} (E_{#gamma1} > 1.4 GeV && E_{#gamma2} > 1.4 GeV);M_{#gamma#gamma} [GeV];Counts", 150, 0.05, 0.2);
         h_pi0M_iter0->Sumw2();
         // TF1 *f_fit_iter0 = new TF1(Form("f_fit_%d", iIter-1), "gausn(0)+pol1(3)", 0.08, 0.2);
@@ -337,11 +337,11 @@ void pi0Calib(TString Kine, int TargetFlag, int iIter)
     }
      
     else{ // Get the correction factor and mass distrubution from the previous iteration when iIter > 1
-        ifstream fcorr_old(Form("Result/%s_pass2_v2/corr_pi0.txt", filename.Data()));
+        ifstream fcorr_old(Form("Result/%s_pass2_v3/corr_pi0.txt", filename.Data()));
         for(int iblk = 0; iblk < 1080; iblk++) fcorr_old>>corr_pi0[iblk];
 
         // Get the mass distribution with the histogram from previous iteration
-        TFile *input = TFile::Open(Form("Result/%s_pass2_v2/f_Mgg_%d.root", filename.Data(), iIter-1));
+        TFile *input = TFile::Open(Form("Result/%s_pass2_v3/f_Mgg_%d.root", filename.Data(), iIter-1));
         TH1F *h_pi0M_last = (TH1F*)input->Get(Form("h_pi0M_%d", iIter-1));
         // TF1 *f_fit_last = new TF1("f_fit_last", "gausn(0)+pol1(3)", 0.08, 0.2);
         // TF1 *f_fit_last = new TF1("f_fit_last", crystalball_poly, 0.08, 0.2, 7);
@@ -538,12 +538,9 @@ void pi0Calib(TString Kine, int TargetFlag, int iIter)
         }
     }
 
-    // update correction coefficients with epsilon
+    // update correction factors with epsilon
     Double_t mean_pi0 = 0.5*(pi0Mass_min+pi0Mass_max);
-    for (Int_t i = 0; i < nblk; i++){
-        if(iIter == 8) corr_pi0[i] *= (1 + epsilon[i])*(m_pi0 / mean_pi0);
-        else corr_pi0[i] *= (1 + epsilon[i]);
-    }
+    for (Int_t i = 0; i < nblk; i++) corr_pi0[i] *= (1 + epsilon[i]);
 
     // update correction coefficients for those outside acceptance with the average of the others
     Double_t sum_inAcc = 0;
@@ -561,8 +558,8 @@ void pi0Calib(TString Kine, int TargetFlag, int iIter)
     }
 
     // save corr_pi0 coeffs
-    system(Form("rm -f Result/%s_pass2_v2/corr_pi0.txt", filename.Data())); // avoid appending old file
-    ofstream corr_pi0_stream(Form("Result/%s_pass2_v2/corr_pi0.txt", filename.Data()));
+    system(Form("rm -f Result/%s_pass2_v3/corr_pi0.txt", filename.Data())); // avoid appending old file
+    ofstream corr_pi0_stream(Form("Result/%s_pass2_v3/corr_pi0.txt", filename.Data()));
     for (Int_t i = 0; i < 1080; i++){
         corr_pi0_stream<<corr_pi0[i]<<endl;
         // cout << corr_pi0[i] << endl;
@@ -573,7 +570,7 @@ void pi0Calib(TString Kine, int TargetFlag, int iIter)
     log_Stream<<"Update the invariant mass distribution with last iteration......"<<endl;
     
     // Event loop: check the new mass position of pi0
-    TFile *output = new TFile(Form("Result/%s_pass2_v2/f_Mgg_%d.root", filename.Data(), iIter), "recreate");
+    TFile *output = new TFile(Form("Result/%s_pass2_v3/f_Mgg_%d.root", filename.Data(), iIter), "recreate");
     TH1F *h_pi0M = new TH1F(Form("h_pi0M_%d", iIter), "M_{#gamma#gamma} (E_{#gamma1} > 1.4 GeV && E_{#gamma2} > 1.4 GeV);M_{#gamma#gamma} [GeV];Counts", 150, 0.05, 0.2);
     h_pi0M->Sumw2();
     // TF1 *f_fit = new TF1(Form("f_fit_%d", iIter), "gausn(0)+pol1(3)", 0.08, 0.2);
@@ -588,9 +585,9 @@ void pi0Calib(TString Kine, int TargetFlag, int iIter)
         for(int iblk = 0; iblk < 1080; iblk++) hasBlock[iblk] = false;
 
         Int_t nCaloBlock = caloev->GetNbBlocks();
-        for(int iblk = 0; iblk < nCaloBlock; iblk++){
+        for(int iblk = 0; iblk < nCaloBlock; iblk++){ 
             TCaloBlock *block = caloev->GetBlock(iblk);
-            Int_t nb = block->GetBlockNumber();
+            Int_t nb = block->GetBlockNumber(); // Here the block number is in simulation numbering scheme
             Float_t energy = block->GetEnergy(0)*corr_pi0[nb];
 
             block->Erase("");
