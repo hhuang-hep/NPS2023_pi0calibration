@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source /etc/skel/.bashrc
+source /etc/profile.d/modules.sh
 source /group/nps/hhuang/software/SetEnvi.sh
 
 runNb=$1
