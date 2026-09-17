@@ -14,14 +14,14 @@
 # Run list for the jobs ===========================================================
 listFile=$1
 prefix="${listFile%_*_*}"
-listDir="/group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/MakeProdList"
+listDir="/group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/pi0Calib_wf/CalibProdList"
 listFileName=$listDir/$listFile
 
 if [[ ! -f "$listFileName" ]]; then
   echo "Can't find the file: $listFileName"
   echo ""
   echo "Please select one of the list below:"
-  ls /group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/MakeProdList/
+  ls /group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/pi0Calib_wf/CalibProdList/
   exit 1
 fi
 
