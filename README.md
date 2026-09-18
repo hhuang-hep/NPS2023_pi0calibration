@@ -1,13 +1,13 @@
 # pi0 calibration scripts (NPS2023 rg1a)
 ## Introduction
-This is the scripts for the energy calibration for the NPS calorimeter. \
+These are the scripts for the energy calibration for the NPS calorimeter. \
 The calibration method is based on Nucl. Instrum. Methods A, 566, 366–374 (2006) using the measured pi0.
 
-## Required enviroment
+## Required environment
  - root-6.30.04 in /group/halla/modulefiles
  - NPS software for clustering and photon reconstruction
 
-## Download and compiling of NPS software
+## Download and compilation of NPS software
 - Setup environment\
 `module purge`\
 `module use /group/halla/modulefiles`\
@@ -50,15 +50,15 @@ The calibration method is based on Nucl. Instrum. Methods A, 566, 366–374 (200
         | caloev | TCaloEvent | Cluster information (Cluster energy & block energy in GeV)|
 
     #### Required modification to calibTree.C
-    - Modify the following two lines on the top
+    - Modify the following two lines at the top of calibTree.C
         - #include "<absolute path to your pi0 calibration folder\>/calibHeader/Analysis.h"
         - #include "<absolute path to your NPS software folder\>/TDVCSDB.h"
 
     #### Test before running on the farm
-    1. Change the directory pointed to the input file by modifying the line TString dataDir = "." in calibTree.C
+    1. Change the directory of the input files by modifying the line TString dataDir = "." in calibTree.C
     2. Currently (2026/09), the files after waveform-fitting are under /cache/hallc/c-nps/analysis/pass2/WF
     3. Check the available run and segment under that directory. 
-    4. Excute `root -b -q 'calibTree.C(<run number>,<segment number>)` and check the output ROOT file
+    4. Execute `root -b -q 'calibTree.C(<run number>,<segment number>)` and check the output ROOT file
 
     #### Note
     - The 0.2 GeV clustering threshold can be change by modifying the line "Double_t clusThr = 0.2" in calibTree.C.
