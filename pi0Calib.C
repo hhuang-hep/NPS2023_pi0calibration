@@ -2,8 +2,8 @@
 // see /group/nps/hhuang/analysis/DVCS_NPS2023/DVCS_analysis/MakeProdList/<kinematics name>_<target flag>_ProdList.txt
 // Target flag: 0 for LH2, 1 for LD2, -1 for both
 
-#include "/group/nps/hhuang/analysis/MyHeader/Analysis.h"
-#include "/group/nps/hhuang/analysis/MyHeader/MyDB.h"
+#include "calibHeader/Analysis.h"
+#include "calibHeader/MyDB.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
